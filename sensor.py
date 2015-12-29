@@ -75,7 +75,7 @@ while True:
         GPIO.add_event_detect(10, GPIO.RISING, callback=presenseHandle,bouncetime=300)
     humidity, temperature = Adafruit_DHT.read_retry(Adafruit_DHT.DHT11,4)
     if humidity is not None and temperature is not None:
-        print 'Humi:'+str(humidity)+'Tmp:'+str(temperature)
+        # print 'Humi:'+str(humidity)+'Tmp:'+str(temperature)
         client.publish('Temp', temperature)
         client.publish('Humidity', humidity)
 	client.publish('Presense',0)
