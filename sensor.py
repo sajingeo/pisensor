@@ -8,24 +8,34 @@ import sys
 import time
 import Adafruit_DHT
 import RPi.GPIO as GPIO
+from twilio.rest import TwilioRestClient
 
+GPIO.cleanup()
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(10, GPIO.IN)
 runOnce = 0
+securityEnable = 'OFF'
 
 # Import Adafruit IO MQTT client.
 from Adafruit_IO import MQTTClient
-
+from Adafruit_IO import Client
 
 # Set to your Adafruit IO key & username below.
-ADAFRUIT_IO_KEY      = 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+ADAFRUIT_IO_KEY      = 'XXXXXXXXXXXXXXXXXX'
 ADAFRUIT_IO_USERNAME = 'superman'  # See https://accounts.adafruit.com
+account_sid = "ACXXXXXXXXXXXXXXXXX"
+auth_token  = "XXXXXXXXXXXXXXXXXXXXXXXXXX"
 # to find your username.
 
 
 def presenseHandle(channel):
     # print 'presense detected!!'
     client.publish('Presense',100)
+    securityEnable = restClient.receive('Security')
+    if (securityEnable.value == 'ON'):
+        #print 'Send Alarm' ## you can add your notification here TWILLIO/ GMAIL etc
+        SMSclient = TwilioRestClient(account_sid, auth_token)
+        message = SMSclient.messages.create(body="Motion Detected!!!",to="+1XXXXXXXXXX",from_="+XXXXXXXXXXXX")
 
 # Define callback functions which will be called when certain events happen.
 def connected(client):
@@ -35,7 +45,7 @@ def connected(client):
     # calls against it easily.
     print 'Connected to Adafruit IO!  Listening for DemoFeed changes...'
     # Subscribe to changes on a feed named DemoFeed.
-    # client.subscribe('DemoFeed')
+    # client.subscribe('Security')
 
 def disconnected(client):
     # Disconnected function will be called when the client disconnects.
@@ -48,9 +58,9 @@ def message(client, feed_id, payload):
     # the new value.
     print 'Feed {0} received new value: {1}'.format(feed_id, payload)
 
-
 # Create an MQTT client instance.
 client=MQTTClient(ADAFRUIT_IO_USERNAME, ADAFRUIT_IO_KEY)
+restClient = Client(ADAFRUIT_IO_KEY)
 
 # Setup the callback functions defined above.
 client.on_connect=connected
@@ -72,7 +82,7 @@ client.connect()
 while True:
     if(runOnce == 0):
         runOnce = 1
-        GPIO.add_event_detect(10, GPIO.RISING, callback=presenseHandle,bouncetime=300)
+        GPIO.add_event_detect(10, GPIO.RISING, callback=presenseHandle,bouncetime=10000)
     humidity, temperature = Adafruit_DHT.read_retry(Adafruit_DHT.DHT11,4)
     if humidity is not None and temperature is not None:
         # print 'Humi:'+str(humidity)+'Tmp:'+str(temperature)
